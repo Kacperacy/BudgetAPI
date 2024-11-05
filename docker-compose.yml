@@ -4,15 +4,21 @@
     build:
       context: .
       dockerfile: BudgetAPI/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+        - db
   
   db:
     image: postgres
     environment:
       POSTGRES_USER: budgetapi
-      POSTGRES_PASSWORD: Z%4J£+5g1BEr
+      POSTGRES_PASSWORD: e8Gr5_nM3w81
       POSTGRES_DB: budgetdb
     ports:
       - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
 volumes:
   pgdata:

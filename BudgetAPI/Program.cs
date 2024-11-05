@@ -2,7 +2,6 @@ using BudgetAPI.Database;
 using BudgetAPI.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using DbContext = BudgetAPI.Database.DbContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,19 +14,20 @@ builder.Services.AddAuthentication()
     .AddBearerToken(IdentityConstants.BearerScheme);
 
 builder.Services.AddIdentityCore<User>()
-    .AddEntityFrameworkStores<DbContext>()
+    .AddEntityFrameworkStores<ApiDbContext>()
     .AddApiEndpoints();
 
-builder.Services.AddDbContext<DbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
+builder.Services.AddDbContext<ApiDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
-
+app.UseSwagger();
+app.UseSwaggerUI();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    // app.UseSwagger();
+    // app.UseSwaggerUI();
     
     app.ApplyMigrations();
 }
