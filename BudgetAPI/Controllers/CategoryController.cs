@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using BudgetAPI.Database;
 using BudgetAPI.Database.Dto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ namespace BudgetAPI.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class CategoryController : ControllerBase
 {
     private readonly ApiDbContext _context;
