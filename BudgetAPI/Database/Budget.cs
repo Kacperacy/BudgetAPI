@@ -9,6 +9,6 @@ public class Budget
     public DateTime EndDate { get; set; }
     
     public User User { get; set; }
-    public Category Category { get; set; }
+    public Category? Category { get; set; }
     public List<Expense> Expenses { get; set; }
 }

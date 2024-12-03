@@ -67,7 +67,7 @@ public class ExpenseController : ControllerBase
         var newExpense = new Expense
         {
             Amount = expense.Amount,
-            Date = expense.Date,
+            Date = expense.Date.ToUniversalTime(),
             Description = expense.Description,
             User = user,
             Category = category

@@ -24,6 +24,13 @@ builder.Services.AddDbContext<ApiDbContext>(options =>
 var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseCors(options => options
+    .AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+);
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

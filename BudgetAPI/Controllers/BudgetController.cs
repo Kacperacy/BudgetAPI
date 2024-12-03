@@ -58,8 +58,6 @@ public class BudgetController : ControllerBase
     {
         var category = await _context.Categories.FindAsync(budget.CategoryId);
 
-        if (category == null) return BadRequest();
-
         var user = await _context.Users.FindAsync(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
         if (user == null) return Unauthorized();
@@ -68,8 +66,8 @@ public class BudgetController : ControllerBase
         {
             Name = budget.Name,
             Amount = budget.Amount,
-            StartDate = budget.StartDate,
-            EndDate = budget.EndDate,
+            StartDate = budget.StartDate.ToUniversalTime(),
+            EndDate = budget.EndDate.ToUniversalTime(),
             User = user,
             Category = category
         };
