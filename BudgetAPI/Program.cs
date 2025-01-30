@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using BudgetAPI;
 using BudgetAPI.Database;
 using BudgetAPI.Extensions;
 using Microsoft.AspNetCore.Identity;
@@ -21,6 +23,8 @@ builder.Services.AddIdentityCore<User>()
 builder.Services.AddDbContext<ApiDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
 var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -37,8 +41,8 @@ if (app.Environment.IsDevelopment())
     // app.UseSwagger();
     // app.UseSwaggerUI();
     
-    app.ApplyMigrations();
 }
+app.ApplyMigrations();
 
 app.UseHttpsRedirection();
 

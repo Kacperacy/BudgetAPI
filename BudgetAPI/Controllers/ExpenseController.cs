@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using AutoMapper;
 using BudgetAPI.Database;
 using BudgetAPI.Database.Dto;
 using Microsoft.AspNetCore.Authorization;
@@ -13,24 +14,33 @@ namespace BudgetAPI.Controllers;
 public class ExpenseController : ControllerBase
 {
     private readonly ApiDbContext _context;
+    private readonly IMapper _mapper;
 
-    public ExpenseController(ApiDbContext context)
+    public ExpenseController(ApiDbContext context, IMapper mapper)
     {
         _context = context;
+        _mapper = mapper;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses()
+    public async Task<ActionResult<IEnumerable<ExpenseDto>>> GetExpenses()
     {
         var user = await _context.Users.FindAsync(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
         if (user == null) return Unauthorized();
 
-        return await _context.Expenses.Where(x => x.User.Id == user.Id).ToListAsync();
+        var expenses = await _context.Expenses
+            .Include(p => p.User)
+            .Where(x => x.User.Id == user.Id)
+            .ToListAsync();
+        
+        var expenseDtos = _mapper.Map<List<ExpenseDto>>(expenses);
+        
+        return expenseDtos;
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Expense>> GetExpense(Guid id)
+    public async Task<ActionResult<ExpenseDto>> GetExpense(Guid id)
     {
         var expense = await _context.Expenses.FindAsync(id);
 
@@ -38,7 +48,9 @@ public class ExpenseController : ControllerBase
 
         if (expense.User.Id != User.FindFirstValue(ClaimTypes.NameIdentifier)) return Unauthorized();
 
-        return expense;
+        var expenseDto = _mapper.Map<ExpenseDto>(expense);
+        
+        return expenseDto;
     }
 
     [HttpPut("{id}")]
@@ -54,30 +66,39 @@ public class ExpenseController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Expense>> PostExpense(CreateExpense expense)
+    public async Task<ActionResult<ExpenseDto>> PostExpense(CreateExpense expense)
     {
-        var category = await _context.Categories.FindAsync(expense.CategoryId);
-
-        if (category == null) return BadRequest();
-
         var user = await _context.Users.FindAsync(User.FindFirstValue(ClaimTypes.NameIdentifier));
-
+    
         if (user == null) return Unauthorized();
-
+    
+        var category = await _context.Categories.FindAsync(expense.CategoryId);
+    
+        var budget = await _context.Budgets
+            .Include(p => p.User)
+            .FirstOrDefaultAsync(p => p.Id == expense.BudgetId);
+    
+        if (budget == null) return BadRequest();
+    
+        if (user.Id != budget.User.Id) return Unauthorized();
+    
         var newExpense = new Expense
         {
+            Description = expense.Description,
             Amount = expense.Amount,
             Date = expense.Date.ToUniversalTime(),
-            Description = expense.Description,
             User = user,
-            Category = category
+            Category = category,
+            Budget = budget
         };
-
+        
         _context.Expenses.Add(newExpense);
 
         await _context.SaveChangesAsync();
+        
+        var expenseDto = _mapper.Map<ExpenseDto>(newExpense);
 
-        return CreatedAtAction("GetExpense", new { id = newExpense.Id }, newExpense);
+        return CreatedAtAction("GetExpense", new { id = expenseDto.Id }, expenseDto);
     }
 
     [HttpDelete("{id}")]

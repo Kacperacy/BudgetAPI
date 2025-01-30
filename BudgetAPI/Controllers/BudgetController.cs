@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using AutoMapper;
 using BudgetAPI.Database;
 using BudgetAPI.Database.Dto;
 using Microsoft.AspNetCore.Authorization;
@@ -13,32 +14,47 @@ namespace BudgetAPI.Controllers;
 public class BudgetController : ControllerBase
 {
     private readonly ApiDbContext _context;
+    private readonly IMapper _mapper;
 
-    public BudgetController(ApiDbContext context)
+    public BudgetController(ApiDbContext context, IMapper mapper)
     {
         _context = context;
+        _mapper = mapper;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Budget>>> GetBudgets()
+    public async Task<ActionResult<IEnumerable<BudgetDto>>> GetBudgets()
     {
         var user = await _context.Users.FindAsync(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
         if (user == null) return Unauthorized();
 
-        return await _context.Budgets.Where(x => x.User.Id == user.Id).ToListAsync();
+        var budgets = await _context.Budgets
+            .Include(p => p.User)
+            .Include(p => p.Expenses)
+            .Where(x => x.User.Id == user.Id)
+            .ToListAsync();
+        
+        var budgetDtos = _mapper.Map<List<BudgetDto>>(budgets);
+        
+        return budgetDtos;
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Budget>> GetBudget(Guid id)
+    public async Task<ActionResult<BudgetDto>> GetBudget(Guid id)
     {
-        var budget = await _context.Budgets.FindAsync(id);
+        var budget = await _context.Budgets
+            .Include(p => p.User)
+            .Include(p => p.Expenses)
+            .FirstOrDefaultAsync(p => p.Id == id);
 
         if (budget == null) return NotFound();
 
         if (budget.User.Id != User.FindFirstValue(ClaimTypes.NameIdentifier)) return Unauthorized();
 
-        return budget;
+        var budgetDto = _mapper.Map<BudgetDto>(budget);
+        
+        return budgetDto;
     }
 
     [HttpPut("{id}")]
