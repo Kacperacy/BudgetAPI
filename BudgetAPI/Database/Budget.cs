@@ -9,6 +9,7 @@ public class Budget
     public DateTime EndDate { get; set; }
     
     public User User { get; set; }
-    public Category? Category { get; set; }
     public ICollection<Expense> Expenses { get; set; }
+    public ICollection<UserBudget> UserBudgets { get; set; } = new List<UserBudget>();
+    public ICollection<Category> Categories { get; set; } = new List<Category>();
 }

@@ -3,6 +3,7 @@ using System;
 using BudgetAPI.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BudgetAPI.Migrations
 {
     [DbContext(typeof(ApiDbContext))]
-    partial class ApiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250130222750_UserBudgetAndCategoryUpdate")]
+    partial class UserBudgetAndCategoryUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -61,6 +64,9 @@ namespace BudgetAPI.Migrations
                     b.Property<Guid>("BudgetId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("CreatedById")
                         .IsRequired()
                         .HasColumnType("text");
@@ -75,7 +81,8 @@ namespace BudgetAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BudgetId");
+                    b.HasIndex("BudgetId")
+                        .IsUnique();
 
                     b.HasIndex("CreatedById");
 
@@ -355,8 +362,8 @@ namespace BudgetAPI.Migrations
             modelBuilder.Entity("BudgetAPI.Database.Category", b =>
                 {
                     b.HasOne("BudgetAPI.Database.Budget", "Budget")
-                        .WithMany("Categories")
-                        .HasForeignKey("BudgetId")
+                        .WithOne("Category")
+                        .HasForeignKey("BudgetAPI.Database.Category", "BudgetId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -466,7 +473,7 @@ namespace BudgetAPI.Migrations
 
             modelBuilder.Entity("BudgetAPI.Database.Budget", b =>
                 {
-                    b.Navigation("Categories");
+                    b.Navigation("Category");
 
                     b.Navigation("Expenses");
 

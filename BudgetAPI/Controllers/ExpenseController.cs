@@ -2,6 +2,7 @@
 using AutoMapper;
 using BudgetAPI.Database;
 using BudgetAPI.Database.Dto;
+using BudgetAPI.Database.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -46,7 +47,9 @@ public class ExpenseController : ControllerBase
 
         if (expense == null) return NotFound();
 
-        if (expense.User.Id != User.FindFirstValue(ClaimTypes.NameIdentifier)) return Unauthorized();
+        var user = await _context.Users.FindAsync(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        
+        if (user == null) return Unauthorized();
 
         var expenseDto = _mapper.Map<ExpenseDto>(expense);
         
@@ -75,12 +78,13 @@ public class ExpenseController : ControllerBase
         var category = await _context.Categories.FindAsync(expense.CategoryId);
     
         var budget = await _context.Budgets
-            .Include(p => p.User)
             .FirstOrDefaultAsync(p => p.Id == expense.BudgetId);
     
         if (budget == null) return BadRequest();
     
-        if (user.Id != budget.User.Id) return Unauthorized();
+        var userBudget = _context.UserBudgets.FirstOrDefault(ub => ub.UserId == user.Id);
+        
+        if (userBudget == null || userBudget.Role == BudgetRole.Viewer) return Forbid();
     
         var newExpense = new Expense
         {
@@ -104,12 +108,19 @@ public class ExpenseController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteExpense(Guid id)
     {
-        var expense = await _context.Expenses.FindAsync(id);
+        var expense = await _context.Expenses
+            .FirstOrDefaultAsync(p => p.Id == id);
 
         if (expense == null) return NotFound();
 
-        if (expense.User.Id != User.FindFirstValue(ClaimTypes.NameIdentifier)) return Unauthorized();
-
+        var user = await _context.Users.FindAsync(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        
+        if (user == null) return Unauthorized();
+        
+        var userBudget = _context.UserBudgets.FirstOrDefault(ub => ub.UserId == user.Id);
+        
+        if (userBudget == null || userBudget.Role == BudgetRole.Viewer) return Forbid();
+        
         _context.Expenses.Remove(expense);
 
         await _context.SaveChangesAsync();

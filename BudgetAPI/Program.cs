@@ -26,8 +26,6 @@ builder.Services.AddDbContext<ApiDbContext>(options =>
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 var app = builder.Build();
-app.UseSwagger();
-app.UseSwaggerUI();
 
 app.UseCors(options => options
     .AllowAnyOrigin()

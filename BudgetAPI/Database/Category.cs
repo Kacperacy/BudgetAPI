@@ -6,5 +6,8 @@ public class Category
     public string Name { get; set; }
     public string Description { get; set; }
     
-    public User User { get; set; }
+    public Budget Budget { get; set; }
+    public Guid BudgetId { get; set; }
+    public User CreatedBy { get; set; }
+    public string CreatedById { get; set; }
 }
